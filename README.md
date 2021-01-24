@@ -32,5 +32,5 @@ Visit OAuth2 tab, select `bot` scope and both `Send Messages` `Read Messages His
 
 ## Update
 
-Update repository (`git pull`), rebuild (`cargo build --release`) and restard the bot.
+Update repository (`git pull`), rebuild (`cargo build --release`) and restart the bot.
 
