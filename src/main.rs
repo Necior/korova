@@ -554,6 +554,25 @@ static EXCUSES: [&str; 466] = [
     "zwiększony nacisk płyt tektonicznych",
 ];
 
+fn get_weather() -> String {
+    if let Ok(apikey) = env::var("KOROVA_OWM_APIKEY") {
+        match &openweathermap::blocking::weather("Warsaw,PL", "metric", "pl", &apikey) {
+            Ok(current) => {
+                let desc = current.weather[0].description.to_string();
+                let temp = format!("{}°C", current.main.temp);
+                let pres = format!("{} hPa", current.main.pressure);
+                format!("Pogoda w Warszawie: {}, {}, {}.", desc, temp, pres)
+            }
+            Err(e) => format!(
+                "Coś się, coś się popsuło i nie było mnie słychać… (Informacja dla nerdów: {}.)",
+                e
+            ),
+        }
+    } else {
+        "*chlip* *chlip*, jak mam sprawdzić pogodę, jeśli nie mam klucza do API?".to_string()
+    }
+}
+
 #[async_trait]
 impl EventHandler for Handler {
     async fn message(&self, ctx: Context, msg: Message) {
@@ -576,7 +595,7 @@ impl EventHandler for Handler {
             "!help" => {
                 let lines = vec![
                     "Gather commands: `!add`, `!del`, `!play`, `!status`.",
-                    "Misc. commands: `!help`, `!ping`, `!wymówka`.",
+                    "Misc. commands: `!help`, `!ping`, `!weather`, `!wymówka`.",
                 ];
                 Some(lines.join("\n"))
             }
@@ -587,6 +606,7 @@ impl EventHandler for Handler {
                     .choose(&mut rand::thread_rng())
                     .unwrap_or(&"Pusta baza wymówek o_O")
             )),
+            "!weather" => Some(get_weather()),
             _ => None,
         };
 
