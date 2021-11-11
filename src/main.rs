@@ -600,13 +600,13 @@ impl EventHandler for Handler {
                 Some(lines.join("\n"))
             }
             "!ping" => Some(format!("Pong, {}.", msg.author.mention())),
-            "!wymówka" => Some(format!(
+            "!w" | "!wymówka" => Some(format!(
                 "{}",
                 EXCUSES
                     .choose(&mut rand::thread_rng())
                     .unwrap_or(&"Pusta baza wymówek o_O")
             )),
-            "!weather" => Some(get_weather()),
+            "!pogoda" | "!weather" => Some(get_weather()),
             _ => None,
         };
 
