@@ -4,6 +4,7 @@ use std::sync::Arc;
 
 use rand::seq::SliceRandom;
 
+use serenity::futures::TryStreamExt;
 use serenity::model::id::ChannelId;
 use serenity::{
     async_trait,
@@ -573,6 +574,31 @@ fn get_weather() -> String {
     }
 }
 
+async fn get_mongodb_collection() -> Option<mongodb::Collection<mongodb::bson::Document>> {
+    let connection_string = env::var("KOROVA_MONGODB_CONNECTION_STRING").ok()?;
+    let db_name = env::var("KOROVA_MONGODB_DB").ok()?;
+    let collection_name = env::var("KOROVA_MONGODB_COLLECTION").ok()?;
+    let client_options = mongodb::options::ClientOptions::parse(&connection_string)
+        .await
+        .ok()?;
+    let client = mongodb::Client::with_options(client_options).unwrap();
+    let db = client.database(&db_name);
+    Some(db.collection::<mongodb::bson::Document>(&collection_name))
+}
+
+async fn get_sad_fortune() -> Option<String> {
+    let collection = get_mongodb_collection().await?;
+    let mut cursor = collection
+        .find(mongodb::bson::doc! {"term": ",_,"}, None)
+        .await
+        .ok()?;
+    let mut fortunes = Vec::new();
+    while let Some(el) = cursor.try_next().await.ok()? {
+        fortunes.push(el.get("description")?.as_str()?.to_string());
+    }
+    Some(fortunes.choose(&mut rand::thread_rng())?.to_string())
+}
+
 #[async_trait]
 impl EventHandler for Handler {
     async fn message(&self, ctx: Context, msg: Message) {
@@ -595,6 +621,7 @@ impl EventHandler for Handler {
             "!help" => {
                 let lines = vec![
                     "Gather commands: `!add`, `!del`, `!play`, `!status`.",
+                    "Bitter fortune: `,_,`",
                     "Misc. commands: `!help`, `!ping`, `!weather`, `!wymówka`.",
                 ];
                 Some(lines.join("\n"))
@@ -607,6 +634,10 @@ impl EventHandler for Handler {
                     .unwrap_or(&"Pusta baza wymówek o_O")
             )),
             "!pogoda" | "!weather" => Some(get_weather()),
+            ",_," => match get_sad_fortune().await {
+                Some(s) => Some(s),
+                None => Some("Neeeciooor! Coś się popsuło (╯°□°）╯︵ ┻━┻".to_string()),
+            },
             _ => None,
         };
 

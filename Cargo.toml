@@ -8,6 +8,7 @@ edition = "2018"
 rand = "0.8.3"
 tokio = { version = "1.0", features = ["macros", "rt-multi-thread"] }
 openweathermap = "0.2.3"
+mongodb = "2.0.0"
 
 [dependencies.serenity]
 default-features = false
