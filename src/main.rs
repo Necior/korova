@@ -586,10 +586,10 @@ async fn get_mongodb_collection() -> Option<mongodb::Collection<mongodb::bson::D
     Some(db.collection::<mongodb::bson::Document>(&collection_name))
 }
 
-async fn get_sad_fortune() -> Option<String> {
+async fn get_fortune(term: &str) -> Option<String> {
     let collection = get_mongodb_collection().await?;
     let mut cursor = collection
-        .find(mongodb::bson::doc! {"term": ",_,"}, None)
+        .find(mongodb::bson::doc! {"term": term}, None)
         .await
         .ok()?;
     let mut fortunes = Vec::new();
@@ -621,7 +621,7 @@ impl EventHandler for Handler {
             "!help" => {
                 let lines = vec![
                     "Gather commands: `!add`, `!del`, `!play`, `!status`.",
-                    "Bitter fortune: `,_,`",
+                    "Fortune commands: `,_,` (sad), `!fortunka` (classic).",
                     "Misc. commands: `!help`, `!ping`, `!weather`, `!wymówka`.",
                 ];
                 Some(lines.join("\n"))
@@ -634,9 +634,13 @@ impl EventHandler for Handler {
                     .unwrap_or(&"Pusta baza wymówek o_O")
             )),
             "!pogoda" | "!weather" => Some(get_weather()),
-            ",_," => match get_sad_fortune().await {
+            ",_," => match get_fortune(",_,").await {
                 Some(s) => Some(s),
                 None => Some("Neeeciooor! Coś się popsuło (╯°□°）╯︵ ┻━┻".to_string()),
+            },
+            "!f" | "!fortunka" => match get_fortune("fortunka").await {
+                Some(s) => Some(s),
+                None => Some("Nie ma fortunek, bo są błędy.".to_string()),
             },
             _ => None,
         };
