@@ -589,14 +589,17 @@ async fn get_mongodb_collection() -> Option<mongodb::Collection<mongodb::bson::D
 async fn get_fortune(term: &str) -> Option<String> {
     let collection = get_mongodb_collection().await?;
     let mut cursor = collection
-        .find(mongodb::bson::doc! {"term": term}, None)
+        .aggregate(
+            vec![
+                mongodb::bson::doc! {"$match": {"term": term}},
+                mongodb::bson::doc! {"$sample": {"size": 1}},
+            ],
+            None,
+        )
         .await
         .ok()?;
-    let mut fortunes = Vec::new();
-    while let Some(el) = cursor.try_next().await.ok()? {
-        fortunes.push(el.get("description")?.as_str()?.to_string());
-    }
-    Some(fortunes.choose(&mut rand::thread_rng())?.to_string())
+    let el = cursor.try_next().await.ok()??;
+    Some(el.get("description")?.as_str()?.to_string())
 }
 
 #[async_trait]
