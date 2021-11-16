@@ -2,8 +2,6 @@ use std::collections::HashMap;
 use std::env;
 use std::sync::Arc;
 
-use rand::seq::SliceRandom;
-
 use serenity::futures::TryStreamExt;
 use serenity::model::id::ChannelId;
 use serenity::{

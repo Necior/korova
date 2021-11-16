@@ -646,7 +646,6 @@ version = "0.1.4"
 dependencies = [
  "mongodb",
  "openweathermap",
- "rand 0.8.4",
  "serenity",
  "tokio",
 ]
