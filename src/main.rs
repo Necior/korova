@@ -9,6 +9,7 @@ use serenity::{
     model::{channel::Message, gateway::Ready, user::User},
     prelude::*,
 };
+use tokio::time::Duration;
 
 static ENVIRONMENT_VARIABLE_NAME: &str = "KOROVA_TOKEN";
 static MIN_PLAYERS: usize = 2;
@@ -153,6 +154,40 @@ impl EventHandler for Handler {
                 Some(lines.join("\n"))
             }
             "!ping" => Some(format!("Pong, {}.", msg.author.mention())),
+            "xD" => {
+                let c = ctx.clone();
+                let m = msg.clone();
+                tokio::task::spawn(async move {
+                    enum Action<'a> {
+                        Sleep(Duration),
+                        SendMsg(&'a str),
+                    }
+
+                    let actions = [
+                        Action::Sleep(Duration::from_secs(20)),
+                        Action::SendMsg("xDDD"),
+                        Action::Sleep(Duration::from_secs(10)),
+                        Action::SendMsg("No nie mogę, skisłem z tego straszie"),
+                        Action::Sleep(Duration::from_secs(60 * 60 * 40)),
+                        Action::SendMsg("Nudzi mi się. Może sobie poczytam coś (oby) zabawnego?"),
+                        Action::SendMsg("!fortunka"),
+                    ];
+                    for action in &actions {
+                        match action {
+                            Action::Sleep(duration) => {
+                                tokio::time::sleep(*duration).await;
+                            }
+                            Action::SendMsg(msg) => {
+                                if let Err(e) = m.channel_id.say(&c.http, msg).await {
+                                    eprintln!("Error sending message: {:?}", e);
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                });
+                None
+            }
             "!w" | "!wymówka" => match get_fortune("wymówka").await {
                 Some(s) => Some(s),
                 None => Some(
