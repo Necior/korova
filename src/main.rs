@@ -167,7 +167,7 @@ impl EventHandler for Handler {
                         Action::Sleep(Duration::from_secs(20)),
                         Action::SendMsg("xDDD"),
                         Action::Sleep(Duration::from_secs(10)),
-                        Action::SendMsg("No nie mogę, skisłem z tego straszie"),
+                        Action::SendMsg("No nie mogę, skisłem z tego strasznie"),
                         Action::Sleep(Duration::from_secs(60 * 60 * 40)),
                         Action::SendMsg("Nudzi mi się. Może sobie poczytam coś (oby) zabawnego?"),
                         Action::SendMsg("!fortunka"),
