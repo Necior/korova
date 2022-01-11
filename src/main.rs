@@ -154,7 +154,7 @@ impl EventHandler for Handler {
                 Some(lines.join("\n"))
             }
             "!ping" => Some(format!("Pong, {}.", msg.author.mention())),
-            "xD" => {
+            "xDDD" => {
                 let c = ctx.clone();
                 let m = msg.clone();
                 tokio::task::spawn(async move {
@@ -165,7 +165,7 @@ impl EventHandler for Handler {
 
                     let actions = [
                         Action::Sleep(Duration::from_secs(20)),
-                        Action::SendMsg("xDDD"),
+                        Action::SendMsg("xD"),
                         Action::Sleep(Duration::from_secs(10)),
                         Action::SendMsg("No nie mogę, skisłem z tego strasznie"),
                         Action::Sleep(Duration::from_secs(60 * 60 * 40)),
