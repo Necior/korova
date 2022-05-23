@@ -164,11 +164,7 @@ impl EventHandler for Handler {
                     }
 
                     let actions = [
-                        Action::Sleep(Duration::from_secs(20)),
-                        Action::SendMsg("xD"),
-                        Action::Sleep(Duration::from_secs(10)),
-                        Action::SendMsg("No nie mogę, skisłem z tego strasznie"),
-                        Action::Sleep(Duration::from_secs(60 * 60 * 40)),
+                        Action::Sleep(Duration::from_secs(60 * 60 * 1337)),
                         Action::SendMsg("Nudzi mi się. Może sobie poczytam coś (oby) zabawnego?"),
                         Action::SendMsg("!fortunka"),
                     ];
