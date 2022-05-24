@@ -13,3 +13,6 @@ mongodb = "2.0.0"
 default-features = false
 features = ["client", "gateway", "rustls_backend", "model"]
 version = "0.10"
+
+[profile.release]
+lto = true
