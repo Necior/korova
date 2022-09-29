@@ -93,6 +93,31 @@ impl Plugin for FortunePlugin {
     }
 }
 
+struct SadFortuneAdderPlugin {
+    trigger: &'static str,
+}
+
+#[async_trait]
+impl Plugin for SadFortuneAdderPlugin {
+    async fn handle(self: &Self, msg: &Message) -> Option<String> {
+        if msg.content.starts_with(self.trigger) {
+            let f = &msg.content[self.trigger.len()..];
+            if f.len() == 0 {
+                Some("Pustej nie dodaję.".to_string())
+            } else {
+                match add_fortune(",_,", f).await {
+                    Some(()) => Some("Dodane :)".to_string()),
+                    None => {
+                        Some("Coś spadło z rowerka, szukaj kaczki do debuggowania.".to_string())
+                    }
+                }
+            }
+        } else {
+            None
+        }
+    }
+}
+
 struct ChannelGather {
     players: Vec<User>,
 }
@@ -258,6 +283,9 @@ impl EventHandler for Handler {
                 term: "fortunka",
                 error_msg: "Nie ma fortunek, bo są błędy",
             }),
+            Box::new(SadFortuneAdderPlugin {
+                trigger: "!dodaj ,_, ",
+            }),
         ];
 
         let type_map = ctx.data.read().await;
@@ -266,39 +294,26 @@ impl EventHandler for Handler {
         let gather = map.entry(msg.channel_id).or_insert_with(ChannelGather::new);
 
         let mut responses: Vec<String> = vec![];
-        let add_trigger = "!dodaj ,_, ";
-        let response: Option<String> = if msg.content.starts_with(add_trigger) {
-            let f = &msg.content[add_trigger.len()..];
-            if f.len() == 0 {
-                Some("Pustej nie dodaję.".to_string())
-            } else {
-                match add_fortune(",_,", f).await {
-                    Some(()) => Some("Dodane :)".to_string()),
-                    None => Some("Coś spadło z rowerka, szukaj kaczki.".to_string()),
-                }
+        let response: Option<String> = match &msg.content[..] {
+            "!add" => {
+                gather.add(&msg.author);
+                Some(gather.status())
             }
-        } else {
-            match &msg.content[..] {
-                "!add" => {
-                    gather.add(&msg.author);
-                    Some(gather.status())
-                }
-                "!del" => {
-                    gather.del(&msg.author);
-                    Some(gather.status())
-                }
-                "!play" => Some(gather.play()),
-                "!status" => Some(gather.status()),
-                "!help" => {
-                    let lines = vec![
-                        "Gather commands: `!add`, `!del`, `!play`, `!status`.",
-                        "Fortune commands: `,_,` (sad), `!fortunka` (classic).",
-                        "Misc. commands: `!help`, `!ping`, `!weather`, `!wymówka`.",
-                    ];
-                    Some(lines.join("\n"))
-                }
-                _ => None,
+            "!del" => {
+                gather.del(&msg.author);
+                Some(gather.status())
             }
+            "!play" => Some(gather.play()),
+            "!status" => Some(gather.status()),
+            "!help" => {
+                let lines = vec![
+                    "Gather commands: `!add`, `!del`, `!play`, `!status`.",
+                    "Fortune commands: `,_,` (sad), `!fortunka` (classic).",
+                    "Misc. commands: `!help`, `!ping`, `!weather`, `!wymówka`.",
+                ];
+                Some(lines.join("\n"))
+            }
+            _ => None,
         };
         if let Some(r) = response {
             responses.push(r);
