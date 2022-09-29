@@ -53,8 +53,14 @@ impl Plugin for ExcusePlugin {
     }
 }
 
+struct City {
+    name: &'static str,
+    name_locative: &'static str,
+    country_code: &'static str,
+}
+
 struct WeatherPlugin {
-    city: String,
+    city: City,
 }
 
 #[async_trait]
@@ -150,14 +156,22 @@ impl TypeMapKey for GlobalGather {
     type Value = Arc<RwLock<HashMap<ChannelId, ChannelGather>>>;
 }
 
-fn get_weather(city: &str) -> String {
+fn get_weather(city: &City) -> String {
     if let Ok(apikey) = env::var("KOROVA_OWM_APIKEY") {
-        match &openweathermap::blocking::weather(city, "metric", "pl", &apikey) {
+        match &openweathermap::blocking::weather(
+            &format!("{},{}", city.name, city.country_code),
+            "metric",
+            "pl",
+            &apikey,
+        ) {
             Ok(current) => {
                 let desc = current.weather[0].description.to_string();
                 let temp = format!("{}°C", current.main.temp);
                 let pres = format!("{} hPa", current.main.pressure);
-                format!("Pogoda dla `{}`: {}, {}, {}.", city, desc, temp, pres)
+                format!(
+                    "Pogoda dla {}: {}, {}, {}.",
+                    city.name_locative, desc, temp, pres
+                )
             }
             Err(e) => format!(
                 "Coś się, coś się popsuło i nie było mnie słychać… (Informacja dla nerdów: {}.)",
@@ -216,13 +230,25 @@ impl EventHandler for Handler {
             Box::new(PingPlugin),
             Box::new(ExcusePlugin),
             Box::new(WeatherPlugin {
-                city: "Warsaw,PL".to_string(),
+                city: City {
+                    name: "Warsaw",
+                    name_locative: "Warszawie",
+                    country_code: "PL",
+                },
             }),
             Box::new(WeatherPlugin {
-                city: "Wrocław,PL".to_string(),
+                city: City {
+                    name: "Wrocław",
+                    name_locative: "Wrocławiu",
+                    country_code: "PL",
+                },
             }),
             Box::new(WeatherPlugin {
-                city: "Dublin,IE".to_string(),
+                city: City {
+                    name: "Dublin",
+                    name_locative: "Dublinie",
+                    country_code: "IE",
+                },
             }),
             Box::new(FortunePlugin {
                 term: ",_,",
