@@ -207,8 +207,9 @@ impl EventHandler for Handler {
         let mut map = lock.write().await;
         let gather = map.entry(msg.channel_id).or_insert_with(ChannelGather::new);
 
+        let mut responses: Vec<String> = vec![];
         let add_trigger = "!dodaj ,_, ";
-        let mut response: Option<String> = if msg.content.starts_with(add_trigger) {
+        let response: Option<String> = if msg.content.starts_with(add_trigger) {
             let f = &msg.content[add_trigger.len()..];
             if f.len() == 0 {
                 Some("Pustej nie dodaję.".to_string())
@@ -281,15 +282,20 @@ impl EventHandler for Handler {
                 _ => None,
             }
         };
+        if let Some(r) = response {
+            responses.push(r);
+        }
         for p in plugins.iter() {
-            response = p.handle(&msg).await;
+            if let Some(r) = p.handle(&msg).await {
+                responses.push(r);
+            }
         }
 
-        if let Some(r) = response {
+        for r in responses {
             if let Err(e) = msg.channel_id.say(&ctx.http, r).await {
                 eprintln!("Error sending message: {:?}", e);
             }
-        };
+        }
     }
 
     async fn ready(&self, _: Context, ready: Ready) {
