@@ -126,6 +126,18 @@ async fn get_fortune(term: &str) -> Option<String> {
     Some(el.get("description")?.as_str()?.to_string())
 }
 
+async fn add_fortune(term: &str, description: &str) -> Option<()> {
+    let collection = get_mongodb_collection().await?;
+    collection
+        .insert_one(
+            mongodb::bson::doc! {"term": term, "description": description},
+            None,
+        )
+        .await
+        .ok()?;
+    Some(())
+}
+
 #[async_trait]
 impl EventHandler for Handler {
     async fn message(&self, ctx: Context, msg: Message) {
@@ -134,72 +146,88 @@ impl EventHandler for Handler {
         let mut map = lock.write().await;
         let gather = map.entry(msg.channel_id).or_insert_with(ChannelGather::new);
 
-        let response: Option<String> = match &msg.content[..] {
-            "!add" => {
-                gather.add(&msg.author);
-                Some(gather.status())
+        let add_trigger = "!dodaj ,_, ";
+        let response: Option<String> = if msg.content.starts_with(add_trigger) {
+            let f = &msg.content[add_trigger.len()..];
+            if f.len() == 0 {
+                Some("Pustej nie dodaję.".to_string())
+            } else {
+                match add_fortune(",_,", f).await {
+                    Some(()) => Some("Dodane :)".to_string()),
+                    None => Some("Coś spadło z rowerka, szukaj kaczki.".to_string()),
+                }
             }
-            "!del" => {
-                gather.del(&msg.author);
-                Some(gather.status())
-            }
-            "!play" => Some(gather.play()),
-            "!status" => Some(gather.status()),
-            "!help" => {
-                let lines = vec![
-                    "Gather commands: `!add`, `!del`, `!play`, `!status`.",
-                    "Fortune commands: `,_,` (sad), `!fortunka` (classic).",
-                    "Misc. commands: `!help`, `!ping`, `!weather`, `!wymówka`.",
-                ];
-                Some(lines.join("\n"))
-            }
-            "!ping" => Some(format!("Pong, {}.", msg.author.mention())),
-            "xDDD" => {
-                let c = ctx.clone();
-                let m = msg.clone();
-                tokio::task::spawn(async move {
-                    enum Action<'a> {
-                        Sleep(Duration),
-                        SendMsg(&'a str),
-                    }
-
-                    let actions = [
-                        Action::Sleep(Duration::from_secs(60 * 60 * 1337)),
-                        Action::SendMsg("Nudzi mi się. Może sobie poczytam coś (oby) zabawnego?"),
-                        Action::SendMsg("!fortunka"),
+        } else {
+            match &msg.content[..] {
+                "!add" => {
+                    gather.add(&msg.author);
+                    Some(gather.status())
+                }
+                "!del" => {
+                    gather.del(&msg.author);
+                    Some(gather.status())
+                }
+                "!play" => Some(gather.play()),
+                "!status" => Some(gather.status()),
+                "!help" => {
+                    let lines = vec![
+                        "Gather commands: `!add`, `!del`, `!play`, `!status`.",
+                        "Fortune commands: `,_,` (sad), `!fortunka` (classic).",
+                        "Misc. commands: `!help`, `!ping`, `!weather`, `!wymówka`.",
                     ];
-                    for action in &actions {
-                        match action {
-                            Action::Sleep(duration) => {
-                                tokio::time::sleep(*duration).await;
-                            }
-                            Action::SendMsg(msg) => {
-                                if let Err(e) = m.channel_id.say(&c.http, msg).await {
-                                    eprintln!("Error sending message: {:?}", e);
-                                    break;
+                    Some(lines.join("\n"))
+                }
+                "!ping" => Some(format!("Pong, {}.", msg.author.mention())),
+                "xDDD" => {
+                    let c = ctx.clone();
+                    let m = msg.clone();
+                    tokio::task::spawn(async move {
+                        enum Action<'a> {
+                            Sleep(Duration),
+                            SendMsg(&'a str),
+                        }
+
+                        let actions = [
+                            Action::Sleep(Duration::from_secs(60 * 60 * 1337)),
+                            Action::SendMsg(
+                                "Nudzi mi się. Może sobie poczytam coś (oby) zabawnego?",
+                            ),
+                            Action::SendMsg("!fortunka"),
+                        ];
+                        for action in &actions {
+                            match action {
+                                Action::Sleep(duration) => {
+                                    tokio::time::sleep(*duration).await;
+                                }
+                                Action::SendMsg(msg) => {
+                                    if let Err(e) = m.channel_id.say(&c.http, msg).await {
+                                        eprintln!("Error sending message: {:?}", e);
+                                        break;
+                                    }
                                 }
                             }
                         }
-                    }
-                });
-                None
+                    });
+                    None
+                }
+                "!w" | "!wymówka" => match get_fortune("wymówka").await {
+                    Some(s) => Some(s),
+                    None => Some(
+                        "Dziwne, nie znalazłem żadnej wymówki. Pewnie Necior coś popsuł."
+                            .to_string(),
+                    ),
+                },
+                "!pogoda" | "!weather" => Some(get_weather()),
+                ",_," => match get_fortune(",_,").await {
+                    Some(s) => Some(s),
+                    None => Some("Neeeciooor! Coś się popsuło (╯°□°）╯︵ ┻━┻".to_string()),
+                },
+                "!f" | "!fortunka" => match get_fortune("fortunka").await {
+                    Some(s) => Some(s),
+                    None => Some("Nie ma fortunek, bo są błędy.".to_string()),
+                },
+                _ => None,
             }
-            "!w" | "!wymówka" => match get_fortune("wymówka").await {
-                Some(s) => Some(s),
-                None => Some(
-                    "Dziwne, nie znalazłem żadnej wymówki. Pewnie Necior coś popsuł.".to_string(),
-                ),
-            },
-            "!pogoda" | "!weather" => Some(get_weather()),
-            ",_," => match get_fortune(",_,").await {
-                Some(s) => Some(s),
-                None => Some("Neeeciooor! Coś się popsuło (╯°□°）╯︵ ┻━┻".to_string()),
-            },
-            "!f" | "!fortunka" => match get_fortune("fortunka").await {
-                Some(s) => Some(s),
-                None => Some("Nie ma fortunek, bo są błędy.".to_string()),
-            },
-            _ => None,
         };
 
         if let Some(r) = response {
