@@ -643,7 +643,7 @@ dependencies = [
 
 [[package]]
 name = "korova"
-version = "0.1.10"
+version = "0.1.11"
 dependencies = [
  "mongodb",
  "openweathermap",
