@@ -9,7 +9,6 @@ use serenity::{
     model::{channel::Message, gateway::Ready, user::User},
     prelude::*,
 };
-use tokio::time::Duration;
 
 static ENVIRONMENT_VARIABLE_NAME: &str = "KOROVA_TOKEN";
 static MIN_PLAYERS: usize = 2;
@@ -241,38 +240,6 @@ impl EventHandler for Handler {
                         "Misc. commands: `!help`, `!ping`, `!weather`, `!wymówka`.",
                     ];
                     Some(lines.join("\n"))
-                }
-                "xDDD" => {
-                    let c = ctx.clone();
-                    let m = msg.clone();
-                    tokio::task::spawn(async move {
-                        enum Action<'a> {
-                            Sleep(Duration),
-                            SendMsg(&'a str),
-                        }
-
-                        let actions = [
-                            Action::Sleep(Duration::from_secs(60 * 60 * 1337)),
-                            Action::SendMsg(
-                                "Nudzi mi się. Może sobie poczytam coś (oby) zabawnego?",
-                            ),
-                            Action::SendMsg("!fortunka"),
-                        ];
-                        for action in &actions {
-                            match action {
-                                Action::Sleep(duration) => {
-                                    tokio::time::sleep(*duration).await;
-                                }
-                                Action::SendMsg(msg) => {
-                                    if let Err(e) = m.channel_id.say(&c.http, msg).await {
-                                        eprintln!("Error sending message: {:?}", e);
-                                        break;
-                                    }
-                                }
-                            }
-                        }
-                    });
-                    None
                 }
                 ",_," => match get_fortune(",_,").await {
                     Some(s) => Some(s),
