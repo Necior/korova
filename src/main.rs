@@ -68,6 +68,25 @@ impl Plugin for WeatherPlugin {
     }
 }
 
+struct FortunePlugin {
+    term: &'static str,
+    error_msg: &'static str,
+}
+
+#[async_trait]
+impl Plugin for FortunePlugin {
+    async fn handle(self: &Self, msg: &Message) -> Option<String> {
+        if msg.content == self.term {
+            match get_fortune(self.term).await {
+                Some(s) => Some(s),
+                None => Some(self.error_msg.to_string()),
+            }
+        } else {
+            None
+        }
+    }
+}
+
 struct ChannelGather {
     players: Vec<User>,
 }
@@ -202,6 +221,14 @@ impl EventHandler for Handler {
             Box::new(WeatherPlugin {
                 city: "Dublin,IE".to_string(),
             }),
+            Box::new(FortunePlugin {
+                term: ",_,",
+                error_msg: "Neeeciooor! Coś się popsuło (╯°□°）╯︵ ┻━┻",
+            }),
+            Box::new(FortunePlugin {
+                term: "fortunka",
+                error_msg: "Nie ma fortunek, bo są błędy",
+            }),
         ];
 
         let type_map = ctx.data.read().await;
@@ -241,14 +268,6 @@ impl EventHandler for Handler {
                     ];
                     Some(lines.join("\n"))
                 }
-                ",_," => match get_fortune(",_,").await {
-                    Some(s) => Some(s),
-                    None => Some("Neeeciooor! Coś się popsuło (╯°□°）╯︵ ┻━┻".to_string()),
-                },
-                "!f" | "!fortunka" => match get_fortune("fortunka").await {
-                    Some(s) => Some(s),
-                    None => Some("Nie ma fortunek, bo są błędy.".to_string()),
-                },
                 _ => None,
             }
         };
