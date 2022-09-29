@@ -16,6 +16,26 @@ static MIN_PLAYERS: usize = 2;
 
 struct Handler;
 
+// Plugin is used for simple plugins which (optionally) respond with a single message when
+// triggered with an incoming message.
+#[async_trait]
+trait Plugin {
+    async fn handle(self: &Self, incoming_message: &Message) -> Option<String>;
+}
+
+struct PingPlugin;
+
+#[async_trait]
+impl Plugin for PingPlugin {
+    async fn handle(self: &Self, msg: &Message) -> Option<String> {
+        if msg.content == "!ping" {
+            Some(format!("Pong, {}.", msg.author.mention()))
+        } else {
+            None
+        }
+    }
+}
+
 struct ChannelGather {
     players: Vec<User>,
 }
@@ -141,13 +161,15 @@ async fn add_fortune(term: &str, description: &str) -> Option<()> {
 #[async_trait]
 impl EventHandler for Handler {
     async fn message(&self, ctx: Context, msg: Message) {
+        let plugins: Vec<Box<dyn Plugin + Send + Sync>> = vec![Box::new(PingPlugin)];
+
         let type_map = ctx.data.read().await;
         let lock = type_map.get::<GlobalGather>().unwrap().clone();
         let mut map = lock.write().await;
         let gather = map.entry(msg.channel_id).or_insert_with(ChannelGather::new);
 
         let add_trigger = "!dodaj ,_, ";
-        let response: Option<String> = if msg.content.starts_with(add_trigger) {
+        let mut response: Option<String> = if msg.content.starts_with(add_trigger) {
             let f = &msg.content[add_trigger.len()..];
             if f.len() == 0 {
                 Some("Pustej nie dodaję.".to_string())
@@ -177,7 +199,6 @@ impl EventHandler for Handler {
                     ];
                     Some(lines.join("\n"))
                 }
-                "!ping" => Some(format!("Pong, {}.", msg.author.mention())),
                 "xDDD" => {
                     let c = ctx.clone();
                     let m = msg.clone();
@@ -229,6 +250,9 @@ impl EventHandler for Handler {
                 _ => None,
             }
         };
+        for p in plugins.iter() {
+            response = p.handle(&msg).await;
+        }
 
         if let Some(r) = response {
             if let Err(e) = msg.channel_id.say(&ctx.http, r).await {
