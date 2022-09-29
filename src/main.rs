@@ -54,13 +54,15 @@ impl Plugin for ExcusePlugin {
     }
 }
 
-struct WeatherPlugin;
+struct WeatherPlugin {
+    city: String,
+}
 
 #[async_trait]
 impl Plugin for WeatherPlugin {
     async fn handle(self: &Self, msg: &Message) -> Option<String> {
         if msg.content == "!pogoda" || msg.content == "!weather" {
-            Some(get_weather())
+            Some(get_weather(&self.city))
         } else {
             None
         }
@@ -130,14 +132,14 @@ impl TypeMapKey for GlobalGather {
     type Value = Arc<RwLock<HashMap<ChannelId, ChannelGather>>>;
 }
 
-fn get_weather() -> String {
+fn get_weather(city: &str) -> String {
     if let Ok(apikey) = env::var("KOROVA_OWM_APIKEY") {
-        match &openweathermap::blocking::weather("Warsaw,PL", "metric", "pl", &apikey) {
+        match &openweathermap::blocking::weather(city, "metric", "pl", &apikey) {
             Ok(current) => {
                 let desc = current.weather[0].description.to_string();
                 let temp = format!("{}°C", current.main.temp);
                 let pres = format!("{} hPa", current.main.pressure);
-                format!("Pogoda w Warszawie: {}, {}, {}.", desc, temp, pres)
+                format!("Pogoda dla `{}`: {}, {}, {}.", city, desc, temp, pres)
             }
             Err(e) => format!(
                 "Coś się, coś się popsuło i nie było mnie słychać… (Informacja dla nerdów: {}.)",
@@ -192,8 +194,13 @@ async fn add_fortune(term: &str, description: &str) -> Option<()> {
 #[async_trait]
 impl EventHandler for Handler {
     async fn message(&self, ctx: Context, msg: Message) {
-        let plugins: Vec<Box<dyn Plugin + Send + Sync>> =
-            vec![Box::new(PingPlugin), Box::new(ExcusePlugin), Box::new(WeatherPlugin)];
+        let plugins: Vec<Box<dyn Plugin + Send + Sync>> = vec![
+            Box::new(PingPlugin),
+            Box::new(ExcusePlugin),
+            Box::new(WeatherPlugin {
+                city: "Warsaw,PL".to_string(),
+            }),
+        ];
 
         let type_map = ctx.data.read().await;
         let lock = type_map.get::<GlobalGather>().unwrap().clone();
