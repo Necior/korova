@@ -219,6 +219,9 @@ impl EventHandler for Handler {
                 city: "Warsaw,PL".to_string(),
             }),
             Box::new(WeatherPlugin {
+                city: "Wrocław,PL".to_string(),
+            }),
+            Box::new(WeatherPlugin {
                 city: "Dublin,IE".to_string(),
             }),
             Box::new(FortunePlugin {
