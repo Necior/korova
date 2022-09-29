@@ -200,6 +200,9 @@ impl EventHandler for Handler {
             Box::new(WeatherPlugin {
                 city: "Warsaw,PL".to_string(),
             }),
+            Box::new(WeatherPlugin {
+                city: "Dublin,IE".to_string(),
+            }),
         ];
 
         let type_map = ctx.data.read().await;
