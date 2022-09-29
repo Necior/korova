@@ -54,6 +54,19 @@ impl Plugin for ExcusePlugin {
     }
 }
 
+struct WeatherPlugin;
+
+#[async_trait]
+impl Plugin for WeatherPlugin {
+    async fn handle(self: &Self, msg: &Message) -> Option<String> {
+        if msg.content == "!pogoda" || msg.content == "!weather" {
+            Some(get_weather())
+        } else {
+            None
+        }
+    }
+}
+
 struct ChannelGather {
     players: Vec<User>,
 }
@@ -180,7 +193,7 @@ async fn add_fortune(term: &str, description: &str) -> Option<()> {
 impl EventHandler for Handler {
     async fn message(&self, ctx: Context, msg: Message) {
         let plugins: Vec<Box<dyn Plugin + Send + Sync>> =
-            vec![Box::new(PingPlugin), Box::new(ExcusePlugin)];
+            vec![Box::new(PingPlugin), Box::new(ExcusePlugin), Box::new(WeatherPlugin)];
 
         let type_map = ctx.data.read().await;
         let lock = type_map.get::<GlobalGather>().unwrap().clone();
@@ -250,7 +263,6 @@ impl EventHandler for Handler {
                     });
                     None
                 }
-                "!pogoda" | "!weather" => Some(get_weather()),
                 ",_," => match get_fortune(",_,").await {
                     Some(s) => Some(s),
                     None => Some("Neeeciooor! Coś się popsuło (╯°□°）╯︵ ┻━┻".to_string()),
