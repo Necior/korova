@@ -194,7 +194,7 @@ fn get_weather(city: &City) -> String {
                 let temp = format!("{}°C", current.main.temp);
                 let pres = format!("{} hPa", current.main.pressure);
                 format!(
-                    "Pogoda dla {}: {}, {}, {}.",
+                    "Pogoda {}: {}, {}, {}.",
                     city.name_locative, desc, temp, pres
                 )
             }
@@ -257,21 +257,21 @@ impl EventHandler for Handler {
             Box::new(WeatherPlugin {
                 city: City {
                     name: "Warsaw",
-                    name_locative: "Warszawie",
+                    name_locative: "w Warszawie",
                     country_code: "PL",
                 },
             }),
             Box::new(WeatherPlugin {
                 city: City {
                     name: "Wrocław",
-                    name_locative: "Wrocławiu",
+                    name_locative: "we Wrocławiu",
                     country_code: "PL",
                 },
             }),
             Box::new(WeatherPlugin {
                 city: City {
                     name: "Dublin",
-                    name_locative: "Dublinie",
+                    name_locative: "w Dublinie",
                     country_code: "IE",
                 },
             }),
