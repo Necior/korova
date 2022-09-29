@@ -102,7 +102,7 @@ impl Plugin for SadFortuneAdderPlugin {
     async fn handle(self: &Self, msg: &Message) -> Option<String> {
         if msg.content.starts_with(self.trigger) {
             let f = &msg.content[self.trigger.len()..];
-            if f.len() == 0 {
+            if f.is_empty() {
                 Some("Pustej nie dodaję.".to_string())
             } else {
                 match add_fortune(",_,", f).await {
