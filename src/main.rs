@@ -343,7 +343,7 @@ impl EventHandler for Handler {
                 let lines = vec![
                     "Gather commands: `!add`, `!del`, `!play`, `!status`.",
                     "Fortune commands: `,_,` (sad), `!fortunka` (classic).",
-                    "Misc. commands: `!help`, `!ping`, `!weather`, `!wymówka`.",
+                    "Misc. commands: `!help`, `!currency`, `!ping`, `!weather`, `!wymówka`.",
                 ];
                 Some(lines.join("\n"))
             }
