@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 use std::env;
+use std::result::Result;
 use std::sync::Arc;
 
 use serenity::futures::TryStreamExt;
@@ -111,6 +112,38 @@ impl Plugin for SadFortuneAdderPlugin {
                         Some("Coś spadło z rowerka, szukaj kaczki do debuggowania.".to_string())
                     }
                 }
+            }
+        } else {
+            None
+        }
+    }
+}
+
+#[derive(serde::Deserialize)]
+struct RatesResponse {
+    rates: HashMap<String, f64>,
+}
+
+struct CurrencyPlugin;
+
+#[async_trait]
+impl Plugin for CurrencyPlugin {
+    async fn handle(self: &Self, msg: &Message) -> Option<String> {
+        async fn get() -> Result<RatesResponse, reqwest::Error> {
+            reqwest::get("https://open.er-api.com/v6/latest/PLN")
+                .await?
+                .json()
+                .await
+        }
+        if msg.content == "!currency" {
+            let rr = get().await;
+            match rr {
+                Err(e) => Some(format!("Error: {}", e)),
+                Ok(rr) => Some(format!(
+                    "**Currency exchange rates**\nEURPLN ≈ {:.3}\nUSDPLN ≈ {:.3}",
+                    1.0 / rr.rates.get("EUR")?,
+                    1.0 / rr.rates.get("USD")?
+                )),
             }
         } else {
             None
@@ -286,6 +319,7 @@ impl EventHandler for Handler {
             Box::new(SadFortuneAdderPlugin {
                 trigger: "!dodaj ,_, ",
             }),
+            Box::new(CurrencyPlugin),
         ];
 
         let type_map = ctx.data.read().await;

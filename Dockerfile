@@ -17,6 +17,7 @@ RUN touch src/*
 RUN cargo build --release
 
 FROM debian:buster-slim
+RUN apt update && apt install -y openssl ca-certificates
 
 COPY --from=builder /usr/src/korova/target/release/korova /usr/local/bin/korova
 ENTRYPOINT ["korova"]
