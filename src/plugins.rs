@@ -12,6 +12,23 @@ pub trait Plugin {
     async fn handle(self: &Self, incoming_message: &Message) -> Option<String>;
 }
 
+// A plugin which prints a ~random line of code.
+pub struct RandomSourceCodeLinePlugin;
+
+#[async_trait]
+impl Plugin for RandomSourceCodeLinePlugin {
+    async fn handle(self: &Self, msg: &Message) -> Option<String> {
+        if msg.content == "!code" {
+            use rand::seq::SliceRandom;
+            let source = include_str!("plugins.rs");
+            let lines: Vec<_> = source.lines().filter(|line| line.trim().len() > 15).collect();
+            Some(format!("```\n{}```", lines.choose(&mut rand::thread_rng()).unwrap().to_string()))
+        } else {
+            None
+        }
+    }
+}
+
 pub struct PingPlugin;
 
 #[async_trait]

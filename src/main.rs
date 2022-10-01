@@ -121,6 +121,7 @@ impl EventHandler for Handler {
                 trigger: "!dodaj ,_, ",
             }),
             Box::new(CurrencyPlugin),
+            Box::new(RandomSourceCodeLinePlugin),
         ];
 
         let type_map = ctx.data.read().await;
@@ -144,7 +145,7 @@ impl EventHandler for Handler {
                 let lines = vec![
                     "Gather commands: `!add`, `!del`, `!play`, `!status`.",
                     "Fortune commands: `,_,` (sad), `!fortunka` (classic).",
-                    "Misc. commands: `!help`, `!currency`, `!ping`, `!weather`, `!wymówka`.",
+                    "Misc. commands: `!help`, `!code`, `!currency`, `!ping`, `!weather`, `!wymówka`.",
                 ];
                 Some(lines.join("\n"))
             }
