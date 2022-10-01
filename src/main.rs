@@ -77,13 +77,14 @@ impl Plugin for WeatherPlugin {
 
 struct FortunePlugin {
     term: &'static str,
+    triggers: Vec<&'static str>,
     error_msg: &'static str,
 }
 
 #[async_trait]
 impl Plugin for FortunePlugin {
     async fn handle(self: &Self, msg: &Message) -> Option<String> {
-        if msg.content == self.term {
+        if self.triggers.contains(&&msg.content[..]) {
             match get_fortune(self.term).await {
                 Some(s) => Some(s),
                 None => Some(self.error_msg.to_string()),
@@ -310,10 +311,12 @@ impl EventHandler for Handler {
             }),
             Box::new(FortunePlugin {
                 term: ",_,",
+                triggers: vec![",_,"],
                 error_msg: "Neeeciooor! Coś się popsuło (╯°□°）╯︵ ┻━┻",
             }),
             Box::new(FortunePlugin {
                 term: "fortunka",
+                triggers: vec!["!fortunka", "!f"],
                 error_msg: "Nie ma fortunek, bo są błędy",
             }),
             Box::new(SadFortuneAdderPlugin {
