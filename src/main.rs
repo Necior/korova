@@ -141,7 +141,7 @@ impl EventHandler for Handler {
                 Some(gather.status())
             }
             "!play" => {
-                schedule_checkup(ctx.clone(), msg.channel_id, gather.players.clone());
+                schedule_checkup(&ctx, &msg.channel_id, &gather.players);
                 Some(gather.play())
             }
             "!status" => Some(gather.status()),
@@ -176,7 +176,9 @@ impl EventHandler for Handler {
     }
 }
 
-fn schedule_checkup(ctx: Context, channel_id: serenity::model::id::ChannelId, on: Vec<User>) {
+fn schedule_checkup(ctx: &Context, channel_id: &serenity::model::id::ChannelId, on: &Vec<User>) {
+    let ctx = ctx.to_owned();
+    let channel_id = channel_id.to_owned();
     let msg = format!(
         "Hey, hey! {}, it has been 2 hours since you started playing! \
         Remember to hydrate, take some rest, or possibly call it a day.",
