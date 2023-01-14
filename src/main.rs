@@ -95,13 +95,6 @@ impl EventHandler for Handler {
             }),
             Box::new(WeatherPlugin {
                 city: City {
-                    name: "Wrocław",
-                    name_locative: "we Wrocławiu",
-                    country_code: "PL",
-                },
-            }),
-            Box::new(WeatherPlugin {
-                city: City {
                     name: "Dublin",
                     name_locative: "w Dublinie",
                     country_code: "IE",
