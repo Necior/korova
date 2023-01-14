@@ -177,18 +177,16 @@ impl EventHandler for Handler {
 }
 
 fn schedule_checkup(ctx: Context, channel_id: serenity::model::id::ChannelId, on: Vec<User>) {
+    let msg = format!(
+        "Hey, hey! {}, it has been 2 hours since you started playing! \
+        Remember to hydrate, take some rest, or possibly call it a day.",
+        on.iter()
+            .map(|p| p.mention().to_string())
+            .collect::<Vec<_>>()
+            .join(", ")
+    );
     tokio::task::spawn(async move {
         tokio::time::sleep(CHECKUP_WAITTIME).await;
-
-        let mut msg = String::from("Hey, hey! ");
-        msg.push_str(
-            &on.iter()
-                .map(|p| p.mention().to_string())
-                .collect::<Vec<_>>()
-                .join(", ")
-                .to_owned(),
-        );
-        msg.push_str(" it has been 2 hours since you started playing! Remember to hydrate, take some rest, or possibly call it a day.");
         if let Err(e) = channel_id.say(&ctx.http, msg).await {
             eprintln!("Error sending message: {:?}", e);
         };
