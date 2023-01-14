@@ -14,6 +14,7 @@ use plugins::*;
 
 static ENVIRONMENT_VARIABLE_NAME: &str = "KOROVA_TOKEN";
 static MIN_PLAYERS: usize = 2;
+static CHECKUP_WAITTIME: std::time::Duration = std::time::Duration::from_secs(60 * 60 * 2);
 
 struct Handler;
 
@@ -177,7 +178,7 @@ impl EventHandler for Handler {
 
 fn schedule_checkup(ctx: Context, channel_id: serenity::model::id::ChannelId, on: Vec<User>) {
     tokio::task::spawn(async move {
-        tokio::time::sleep(std::time::Duration::from_secs(60 * 60 * 2)).await;
+        tokio::time::sleep(CHECKUP_WAITTIME).await;
 
         let mut msg = String::from("Hey, hey! ");
         msg.push_str(
