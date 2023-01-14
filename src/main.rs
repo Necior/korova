@@ -14,6 +14,7 @@ use plugins::*;
 
 static ENVIRONMENT_VARIABLE_NAME: &str = "KOROVA_TOKEN";
 static MIN_PLAYERS: usize = 2;
+static CHECKUP_WAITTIME: std::time::Duration = std::time::Duration::from_secs(60 * 60 * 2);
 
 struct Handler;
 
@@ -132,7 +133,10 @@ impl EventHandler for Handler {
                 gather.del(&msg.author);
                 Some(gather.status())
             }
-            "!play" => Some(gather.play()),
+            "!play" => {
+                schedule_checkup(&ctx, &msg.channel_id, &gather.players);
+                Some(gather.play())
+            }
             "!status" => Some(gather.status()),
             "!help" => {
                 let lines = vec![
@@ -163,6 +167,25 @@ impl EventHandler for Handler {
     async fn ready(&self, _: Context, ready: Ready) {
         eprintln!("{} is connected!", ready.user.name);
     }
+}
+
+fn schedule_checkup(ctx: &Context, channel_id: &serenity::model::id::ChannelId, on: &Vec<User>) {
+    let ctx = ctx.to_owned();
+    let channel_id = channel_id.to_owned();
+    let msg = format!(
+        "Hey, hey! {}, it has been 2 hours since you started playing! \
+        Remember to hydrate, take some rest, or possibly call it a day.",
+        on.iter()
+            .map(|p| p.mention().to_string())
+            .collect::<Vec<_>>()
+            .join(", ")
+    );
+    tokio::task::spawn(async move {
+        tokio::time::sleep(CHECKUP_WAITTIME).await;
+        if let Err(e) = channel_id.say(&ctx.http, msg).await {
+            eprintln!("Error sending message: {:?}", e);
+        };
+    });
 }
 
 #[tokio::main]
