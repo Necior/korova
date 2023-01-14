@@ -139,7 +139,10 @@ impl EventHandler for Handler {
                 gather.del(&msg.author);
                 Some(gather.status())
             }
-            "!play" => Some(gather.play()),
+            "!play" => {
+                schedule_checkup(ctx.clone(), msg.channel_id, gather.players.clone());
+                Some(gather.play())
+            }
             "!status" => Some(gather.status()),
             "!help" => {
                 let lines = vec![
@@ -170,6 +173,25 @@ impl EventHandler for Handler {
     async fn ready(&self, _: Context, ready: Ready) {
         eprintln!("{} is connected!", ready.user.name);
     }
+}
+
+fn schedule_checkup(ctx: Context, channel_id: serenity::model::id::ChannelId, on: Vec<User>) {
+    tokio::task::spawn(async move {
+        tokio::time::sleep(std::time::Duration::from_secs(60 * 60 * 2)).await;
+
+        let mut msg = String::from("Hey, hey! ");
+        msg.push_str(
+            &on.iter()
+                .map(|p| p.mention().to_string())
+                .collect::<Vec<_>>()
+                .join(", ")
+                .to_owned(),
+        );
+        msg.push_str(" it has been 2 hours since you started playing! Remember to hydrate, take some rest, or possibly call it a day.");
+        if let Err(e) = channel_id.say(&ctx.http, msg).await {
+            eprintln!("Error sending message: {:?}", e);
+        };
+    });
 }
 
 #[tokio::main]
