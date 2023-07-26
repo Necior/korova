@@ -37,9 +37,9 @@ impl ChannelGather {
         self.players.retain(|p| p.id != player.id);
     }
 
-    fn play(&mut self) -> String {
+    fn play(&mut self) -> Result<(String, Vec<User>), String> {
         if self.players.len() < MIN_PLAYERS {
-            String::from("We need at least 2 players.")
+            Err(String::from("We need at least 2 players."))
         } else {
             let lines = vec![
                 String::from("Get ready for the game. Let me summon everyone:"),
@@ -50,8 +50,9 @@ impl ChannelGather {
                     .join(" | "),
                 String::from("Good luck & have fun!"),
             ];
+            let players = self.players.clone();
             self.players = vec![];
-            lines.join("\n")
+            Ok((lines.join("\n"), players))
         }
     }
 
@@ -133,10 +134,13 @@ impl EventHandler for Handler {
                 gather.del(&msg.author);
                 Some(gather.status())
             }
-            "!play" => {
-                schedule_checkup(&ctx, &msg.channel_id, &gather.players);
-                Some(gather.play())
-            }
+            "!play" => match gather.play() {
+                Ok((text, players)) => {
+                    schedule_checkup(&ctx, &msg.channel_id, &players);
+                    Some(text)
+                }
+                Err(text) => Some(text),
+            },
             "!status" => Some(gather.status()),
             "!help" => {
                 let lines = vec![
