@@ -1,6 +1,6 @@
 [package]
 name = "korova"
-version = "0.1.15"
+version = "0.1.16"
 authors = ["Adrian Sadłocha"]
 edition = "2018"
 
